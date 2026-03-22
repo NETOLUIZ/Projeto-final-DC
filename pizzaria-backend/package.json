@@ -1,0 +1,30 @@
+{
+  "name": "pizzaria-backend",
+  "version": "1.0.0",
+  "description": "Backend API for Pizzaria System",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
+    "seed": "node prisma/seed.js",
+    "db:push": "prisma db push"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.x",
+    "bcrypt": "^5.x",
+    "cors": "^2.x",
+    "dotenv": "^16.x",
+    "express": "^4.x",
+    "express-async-errors": "^3.x",
+    "jsonwebtoken": "^9.x",
+    "prisma": "^5.x",
+    "socket.io": "^4.x",
+    "zod": "^3.x"
+  },
+  "devDependencies": {
+    "nodemon": "^3.x"
+  },
+  "prisma": {
+    "seed": "node prisma/seed.js"
+  }
+}

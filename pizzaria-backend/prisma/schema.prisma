@@ -1,0 +1,235 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String   @unique
+  password  String
+  role      Role     @default(ATENDENTE)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  CashRegisters CashRegister[]
+}
+
+enum Role {
+  ADMIN
+  ATENDENTE
+  COZINHA
+  ENTREGADOR
+}
+
+model Customer {
+  id        Int      @id @default(autoincrement())
+  name      String
+  phone     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  Orders    Order[]
+}
+
+model Category {
+  id        Int       @id @default(autoincrement())
+  name      String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  Products  Product[]
+}
+
+model Product {
+  id          Int      @id @default(autoincrement())
+  name        String
+  price       Decimal  @db.Decimal(10, 2)
+  description String?
+  image       String?
+  categoryId  Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  Category    Category             @relation(fields: [categoryId], references: [id])
+  Additionals ProductAdditional[]
+  OrderItems  OrderItem[]
+}
+
+model ProductAdditional {
+  id        Int      @id @default(autoincrement())
+  productId Int
+  name      String
+  price     Decimal  @db.Decimal(10, 2)
+
+  Product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+}
+
+model Table {
+  id        Int         @id @default(autoincrement())
+  number    Int         @unique
+  status    TableStatus @default(LIVRE)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  Orders    Order[]
+}
+
+enum TableStatus {
+  LIVRE
+  OCUPADA
+}
+
+model DeliveryDriver {
+  id        Int          @id @default(autoincrement())
+  name      String
+  phone     String?
+  status    DriverStatus @default(DISPONIVEL)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  Orders    Order[]
+}
+
+enum DriverStatus {
+  DISPONIVEL
+  EM_ENTREGA
+  INATIVO
+}
+
+model Order {
+  id            Int           @id @default(autoincrement())
+  customerId    Int?
+  tableId       Int?
+  driverId      Int?
+  status        OrderStatus   @default(NOVO)
+  type          OrderType
+  total         Decimal       @db.Decimal(10, 2)
+  paymentMethod PaymentMethod?
+  paymentStatus PaymentStatus @default(PENDENTE)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  Customer      Customer?     @relation(fields: [customerId], references: [id])
+  Table         Table?        @relation(fields: [tableId], references: [id])
+  Driver        DeliveryDriver? @relation(fields: [driverId], references: [id])
+  Items         OrderItem[]
+  Address       Address?
+  Payments      Payment[]
+}
+
+enum OrderStatus {
+  NOVO
+  RECEBIDO
+  EM_PREPARO
+  PRONTO
+  SAIU_PARA_ENTREGA
+  FINALIZADO
+  CANCELADO
+}
+
+enum OrderType {
+  DELIVERY
+  RETIRADA
+  LOCAL
+}
+
+enum PaymentMethod {
+  PIX
+  CARTAO
+  DINHEIRO
+}
+
+enum PaymentStatus {
+  PENDENTE
+  PAGO
+  CANCELADO
+}
+
+model OrderItem {
+  id          Int       @id @default(autoincrement())
+  orderId     Int
+  productId   Int
+  size        String?
+  quantity    Int
+  unitPrice   Decimal   @db.Decimal(10, 2)
+  totalPrice  Decimal   @db.Decimal(10, 2)
+  observation String?
+
+  Order       Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  Product     Product   @relation(fields: [productId], references: [id])
+  Additionals OrderItemAdditional[]
+}
+
+model OrderItemAdditional {
+  id            Int       @id @default(autoincrement())
+  orderItemId   Int
+  additionalId  Int
+  price         Decimal   @db.Decimal(10, 2)
+
+  OrderItem     OrderItem @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
+}
+
+model Address {
+  id           Int     @id @default(autoincrement())
+  orderId      Int     @unique
+  street       String
+  number       String
+  neighborhood String
+  city         String
+  state        String
+  zipCode      String?
+  complement   String?
+
+  Order        Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+}
+
+model Payment {
+  id            Int           @id @default(autoincrement())
+  orderId       Int
+  method        PaymentMethod
+  amount        Decimal       @db.Decimal(10, 2)
+  status        PaymentStatus @default(PAGO)
+  createdAt     DateTime      @default(now())
+
+  Order         Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+}
+
+model CashRegister {
+  id             Int               @id @default(autoincrement())
+  userId         Int
+  openedAt       DateTime          @default(now())
+  closedAt       DateTime?
+  initialBalance Decimal           @db.Decimal(10, 2)
+  finalBalance   Decimal?          @db.Decimal(10, 2)
+  status         CashStatus        @default(ABERTO)
+
+  User           User              @relation(fields: [userId], references: [id])
+  Transactions   CashTransaction[]
+}
+
+enum CashStatus {
+  ABERTO
+  FECHADO
+}
+
+model CashTransaction {
+  id             Int             @id @default(autoincrement())
+  cashRegisterId Int
+  type           TransactionType
+  amount         Decimal         @db.Decimal(10, 2)
+  description    String?
+  paymentMethod  PaymentMethod?
+  createdAt      DateTime        @default(now())
+
+  CashRegister   CashRegister    @relation(fields: [cashRegisterId], references: [id], onDelete: Cascade)
+}
+
+enum TransactionType {
+  ENTRY
+  EXIT
+}
