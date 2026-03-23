@@ -72,7 +72,7 @@ DATABASE_URL="mysql://root:sua_senha@localhost:3306/pizzaria_db"
 
 ### Banco de dados
 
-Suba o schema no banco:
+Após a instalação e colocado online o ambiente do servidor(Xaamp ou Waamp) Suba o schema no banco:
 
 ```bash
 npx prisma db push
